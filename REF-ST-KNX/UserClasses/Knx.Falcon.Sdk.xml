@@ -1,0 +1,976 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Knx.Falcon.Sdk</name>
+    </assembly>
+    <members>
+        <member name="T:Knx.Falcon.Sdk.Bus">
+            <summary>
+            The bus access class for creating bus connections, performing network operations and group communication. 
+            This class is also for advising to group communication events.
+            </summary>
+        </member>
+        <member name="E:Knx.Falcon.Sdk.Bus.LocalInterfaceAddressChanged">
+            <summary>
+            This event is fired when the local individual address changes, either by setting the <see cref="P:Knx.Falcon.Sdk.Bus.LocalIndividualAddress"/> property or
+            by calling <see cref="M:Knx.Falcon.Sdk.Bus.SetLocalConfiguration(Knx.Bus.Common.LocalConfiguration)"/> method.
+            </summary>
+        </member>
+        <member name="E:Knx.Falcon.Sdk.Bus.GroupValueReceived">
+            <summary>
+            Occurs when a group value is received from the bus as ValueWrite or ValueResponse message.
+            The individual address is the source address of the sending device.
+            </summary>
+            <remarks>
+            This event is also raised if for the link layer confirmations of group messages sent via
+            <see cref="M:Knx.Falcon.Sdk.Bus.WriteValue(Knx.Bus.Common.GroupAddress,Knx.Bus.Common.GroupValues.GroupValue,Knx.Bus.Common.Priority)"/> and <see cref="M:Knx.Falcon.Sdk.Bus.SendValueResponse(Knx.Bus.Common.GroupAddress,Knx.Bus.Common.GroupValues.GroupValue,Knx.Bus.Common.Priority)"/>; in this case <see cref="P:Knx.Bus.Common.GroupValueEventArgs.IsConfirmation"/>
+            will be set to <c>true</c>.
+            </remarks>
+            <example>
+               <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="GroupValueReceived"/>
+            </example> 
+        </member>
+        <member name="E:Knx.Falcon.Sdk.Bus.GroupValueReadReceived">
+            <summary>
+            Occurs when a group value read message is received from the bus.
+            The individual address is the source address of the sending device.
+            The property <see cref="P:Knx.Bus.Common.GroupValueEventArgs.Value"/> is null.
+            </summary>
+            <remarks>
+            This event is also raised if for the link layer confirmations of group messages sent via
+            <see cref="M:Knx.Falcon.Sdk.Bus.ReadValue(Knx.Bus.Common.GroupAddress,Knx.Bus.Common.Priority,System.Int32)"/> and <see cref="M:Knx.Falcon.Sdk.Bus.SendReadValueRequest(Knx.Bus.Common.GroupAddress,Knx.Bus.Common.Priority)"/>; in this case <see cref="P:Knx.Bus.Common.GroupValueEventArgs.IsConfirmation"/>
+            will be set to <c>true</c>.
+            </remarks>
+            <example>
+               <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="GroupValueReceived"/>
+            </example> 
+        </member>
+        <member name="E:Knx.Falcon.Sdk.Bus.StateChanged">
+            <summary>
+            This event is fired when the state of the underlying connector changes.
+            </summary>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.#ctor(Knx.Bus.Common.Configuration.ConnectorParameters)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Knx.Falcon.Sdk.Bus" /> class.
+            </summary>
+            <param name="connectorParameter">A connector type specific parameter object. See remarks for valid combinations.</param>
+            <remarks>
+            The following connector parameters are valid:
+            <list type="table">
+              <listheader>
+                <term>Connector type:</term>
+                <description>Parameters:</description>
+              </listheader>
+              <item>
+                <term><see cref="T:Knx.Bus.Common.Configuration.UsbConnectorParameters"/></term>
+                <description>
+                  <list type="table">
+                    <item>
+                      <term><see cref="P:Knx.Bus.Common.Configuration.UsbConnectorParameters.DeviceIndex"/></term>
+                      <description>Select the USB device by device with index (zero-based).
+                        <example>
+                          <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="USB Connect with index"/>
+                        </example>
+                      </description>
+                    </item>
+                    <item>
+                      <term><see cref="P:Knx.Bus.Common.Configuration.UsbConnectorParameters.PreferredAddressToOpen"/></term>
+                      <description>Select the USB device with the specified individual address.
+                        <example>
+                          <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="USB Connect with IA"/>
+                        </example>
+                      </description>
+                    </item>
+                    <item>
+                      <term><see cref="M:Knx.Bus.Common.Configuration.UsbConnectorParameters.#ctor"/></term>
+                      <description>Select the first detected USB interface.
+                        <example>
+                          <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="USB Connect without index"/>
+                        </example>
+                      </description>
+                    </item>
+                    <item>
+                      <term><see cref="P:Knx.Bus.Common.Configuration.UsbConnectorParameters.DevicePath"/></term>
+                      <description>Select the USB device with the specified device (HID) path.
+                        <example>
+                          <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="USB Connect with full path"/>
+                        </example>
+                      </description>
+                    </item>
+                  </list>
+                </description>
+              </item>
+              <item>
+                <term><see cref="T:Knx.Bus.Common.Configuration.KnxIpTunnelingConnectorParameters"/></term>
+                <description>
+                  <list type="table">
+                    <item>
+                      <term>Parameter</term>
+                      <description>Select the tunneling device with the specified IP address, port and NAT mode flag.
+                        <example>
+                          <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="Tunneling with Parameter"/>
+                        </example>
+                      </description>
+                    </item>
+                  </list>
+                </description>
+              </item> 
+              <item>
+                <term><see cref="T:Knx.Bus.Common.Configuration.KnxIpRoutingConnectorParameters"/></term>
+                <description>
+                  <list type="table">
+                    <item>
+                      <term>Parameter</term>
+                      <description>Select the routing parameter with the specified multicast address and the KNX address.
+                        <example>
+                          <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="Routing with Parameter"/>
+                        </example>
+                      </description>
+                    </item>
+                  </list>
+                </description>
+              </item>  
+            </list>
+            </remarks>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Knx.Falcon.Sdk.Bus" /> class.
+            </summary>
+            <param name="connectionString">A connection string. See remarks for valid combinations.</param>
+            <remarks>
+            The valid connection strings for the different connector types are documented here
+            <list type="bullet">
+              <item><see cref="T:Knx.Bus.Common.Configuration.UsbConnectorParameters"/></item>
+              <item><see cref="T:Knx.Bus.Common.Configuration.KnxIpTunnelingConnectorParameters"/></item>
+              <item><see cref="T:Knx.Bus.Common.Configuration.KnxIpRoutingConnectorParameters"/></item>
+            </list>
+            </remarks>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.MaxUsedApduLength">
+            <summary>
+            Gets or sets the APDU length used by Falcon.
+            </summary>
+            <value>
+            The maximum APDU length used for communication.
+            </value>
+            <exception cref="T:System.ArgumentOutOfRangeException">if the specified value is greater than the <see cref="P:Knx.Falcon.Sdk.Bus.MaxApduLength"/> of the local interface.</exception>
+            <remarks>The APDU length is initialized to the maximum APDU length of the local interface when connecting to the interface.</remarks>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.MaxApduLength">
+            <summary>
+            Gets the maximum APDU length supported by the local interface.
+            </summary>
+            <value>
+            The maximum APDU length supported by the local interface.
+            </value>
+            <remarks>The maximum APDU length is initialized when connecting to the local interface.</remarks>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.LocalIndividualAddress">
+            <summary>
+            Gets or sets the individual address of the local interface.
+            </summary>
+            <value>
+            The individual address of the local interface.
+            </value>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.Type">
+            <summary>
+            Gets the type of the local connector, see also <see cref="T:Knx.Bus.Common.ConnectorTypes"/>.
+            </summary>
+            <value>
+            The type of the local connector.
+            </value>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.State">
+            <summary>
+            Gets the current state of the underlying connector, see also <see cref="T:Knx.Bus.Common.BusConnectionStatus"/>.
+            </summary>
+            <value>
+            The current state of the underlying connector.
+            </value>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.OpenParameters">
+            <summary>
+            Gets the <see cref="T:Knx.Bus.Common.Configuration.ConnectorParameters"/> used to connect to the local connector.
+            </summary>
+            <value>
+            The <see cref="T:Knx.Bus.Common.Configuration.ConnectorParameters"/> used to connect to the local connector.
+            </value>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.Mode">
+            <summary>
+            Returns the mode in which the connector is opened. The returned value is only valid if the connector has been opened
+            in advance.
+            </summary>
+            <value>
+            The <see cref="T:Knx.Bus.Common.ConnectorMode"/>.
+            </value> 
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.GroupCommunicationSecurity">
+            <summary>
+            Provides the necessary information for secure group communication.
+            </summary>
+            <remarks>
+            To use secure group communication, set this property to an instance of the <see cref="P:Knx.Falcon.Sdk.Bus.GroupCommunicationSecurity"/> class before calling any 
+            of the group communication methods or subscribing the group communication events.
+            </remarks>
+            <example>
+              <code lang="cs" title="Manually added group keys:" source="..\DocumentationSamples\BusSamples.cs" region="Manually added group keys"/>
+              <code lang="cs" title="Group keys from ETS keyring file:" source="..\DocumentationSamples\BusSamples.cs" region="Group keys from ETS keyring file"/>
+            </example>  
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.DeviceCommunicationSecurity">
+            <summary>
+            Provides the necessary information for secure device communication to remote devices.
+            </summary>
+            <remarks>
+            To use secure device communication, set this property to an instance of the <see cref="P:Knx.Falcon.Sdk.Bus.DeviceCommunicationSecurity"/> class before opening
+            a connection to a device using <see cref="M:Knx.Falcon.Sdk.Bus.OpenDevice(Knx.Bus.Common.IndividualAddress,Knx.Bus.Common.ConnectionModes,System.Action{Knx.Bus.Common.AsyncProgress})"/>. 
+            </remarks>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.GetLocalConfiguration">
+            <summary>
+            Gets the <see cref="T:Knx.Bus.Common.LocalConfiguration"/> of the current bus connector.
+            </summary>
+            <returns>Returns the local configuration of the current bus connector.</returns>
+            <remarks>This is only available if connected to the bus.</remarks>
+            <example>
+              <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="LocalConfiguration"/>
+            </example>  
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.GetLocalConfiguration(Knx.Bus.Common.Configuration.ConnectorParameters)">
+            <summary>
+            Gets the <see cref="T:Knx.Bus.Common.LocalConfiguration"/> of the specified connector (See <see cref="T:Knx.Bus.Common.Configuration.ConnectorParameters"/> for more information about valid combinations).
+            </summary>
+            <param name="connectorParameter">A connector type specific parameters.</param>
+            <returns>Returns the local configuration settings if the bus connector is present, see also <see cref="T:Knx.Bus.Common.LocalConfiguration"/>.</returns>
+            <example>
+              <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="StaticLocalConfiguration"/>
+            </example>  
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.SetLocalConfiguration(Knx.Bus.Common.LocalConfiguration)">
+            <summary>
+            Sets the <see cref="T:Knx.Bus.Common.LocalConfiguration"/> of the current bus connector.
+            </summary>
+            <param name="configuration">The local configuration to be written to the local connector, see also <see cref="T:Knx.Bus.Common.LocalConfiguration"/>.</param>
+            <remarks>
+            This is only available if connected to the bus.
+            </remarks>
+            <example>
+              <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="SetLocalConfiguation"/>
+            </example>  
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.SetLocalConfiguration(Knx.Bus.Common.Configuration.ConnectorParameters,Knx.Bus.Common.LocalConfiguration)">
+            <summary>
+            Sets the local configuration of the specified connector (See <see cref="T:Knx.Bus.Common.Configuration.ConnectorParameters"/> for more information about valid combinations).
+            </summary>
+            <param name="connectorParameter">A connector type specific parameter.</param>
+            <param name="configuration">The local configuration to be written to the local connector <see cref="T:Knx.Bus.Common.LocalConfiguration"/>.</param>
+            <example>
+              <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="StaticSetLocalConfiguation"/>
+            </example>  
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.Connect">
+            <summary>
+            Opens the local interface and connects to the bus using link-layer mode.
+            </summary>
+            <exception cref="T:System.NotSupportedException">This exception is thrown when the bus connector is already connected to the bus.</exception>  
+            <exception cref="T:Knx.Bus.Common.Exceptions.ConnectorException">This exception is thrown when the bus connector cannot be opened.</exception>   
+            <example>
+              <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="USB Connect with IA"/>
+            </example> 
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.CheckCommunication">
+            <summary>
+            Checks the communication availability of the underlying bus connector.
+            </summary>
+            <returns>Returns <see cref="F:Knx.Bus.Common.CheckCommunicationResult.Ok"/> if communication works properly; 
+            otherwise any other of the <see cref="T:Knx.Bus.Common.CheckCommunicationResult"/>.</returns>
+            <example>
+              <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="CheckCommunication"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.CheckCommunication(Knx.Bus.Common.Configuration.ConnectorParameters)">
+            <summary>
+            Checks the communication availability of the bus connector with the specified parameters.
+            </summary>
+            <param name="connectorParameter">The specified <see cref="T:Knx.Bus.Common.Configuration.ConnectorParameters"/>.</param>
+            <returns>
+            Returns <see cref="F:Knx.Bus.Common.CheckCommunicationResult.Ok"/> if communication works properly; 
+            otherwise any other of the <see cref="T:Knx.Bus.Common.CheckCommunicationResult"/>.
+            </returns>
+            <example>
+              <code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="StaticCheckCommunication"/>
+            </example> 
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.IsConnected">
+            <summary>
+            Gets a value indicating whether the local interface is connected.
+            </summary>
+            <value>
+            <c>true</c> if the local interface is connected; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.Disconnect">
+            <summary>
+            Disconnects from the bus and closes the local interface. No further communication is possible.
+            During a dispose a disconnect is performed. 
+            </summary>
+            <example>
+              <code lang="cs" title="Disconnect" source="..\DocumentationSamples\BusSamples.cs" region="Disconnect"/>
+              <code lang="cs" title="A disconnect is executing while calling dispose" source="..\DocumentationSamples\BusSamples.cs" region="DisconnectDispose"/>
+              <code lang="cs" title="A disconnect is executing while calling dispose" source="..\DocumentationSamples\BusSamples.cs" region="Dispose"/>
+            </example>  
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.OpenDevice(Knx.Bus.Common.IndividualAddress,Knx.Bus.Common.ConnectionModes,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Opens a remote device (connection-oriented or connectionless) for device management.
+            </summary>
+            <param name="targetAddress">The target address of the remote device, see <see cref="T:Knx.Bus.Common.IndividualAddress"/>.</param>
+            <param name="mode">The <see cref="T:Knx.Bus.Common.ConnectionModes"/>.</param>
+            <param name="progressCallback">The progress callback to receive progress information or to cancel connect procedure.</param>
+            <returns>The device management object for the remote device <see cref="T:Knx.Falcon.Sdk.Device"/>.</returns>
+            <example>
+              <code lang="cs" title="Open a device management connection-oriented connection to device 1.1.1 using a string device address:" source="..\DocumentationSamples\BusSamples.cs" region="Connect to remote device connection oriented IA-string"/>
+              <code lang="cs" title="Open a device management connection-oriented connection to device 1.1.1 using a ushort device address:" source="..\DocumentationSamples\BusSamples.cs" region="Connect to remote device connection oriented IA-ushort"/>
+              <code lang="cs" title="Open a device management connection-oriented connection to device 1.1.1 using progress callback:" source="..\DocumentationSamples\BusSamples.cs" region="Connect to remote device connection oriented with callback"/>
+              <code lang="cs" title="Open a device management connectionless connection to device 1.1.1:" source="..\DocumentationSamples\BusSamples.cs" region="Connect to remote device connectionless with callback"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.WriteValue(Knx.Bus.Common.GroupAddress,Knx.Bus.Common.GroupValues.GroupValue,Knx.Bus.Common.Priority)">
+            <summary>
+            Writes a group value to the bus. The group values are strongly typed and convertible from/into well known .NET types. Therefore it is easy to write group values to the bus without converting them into byte arrays.
+            </summary>
+            <param name="targetAddress">The target <see cref="T:Knx.Bus.Common.GroupAddress"/>.</param>
+            <param name="value">The value to be written, see <see cref="T:Knx.Bus.Common.GroupValues.GroupValue"/>.</param>
+            <param name="priority">The priority used for sending. The priority <see cref="F:Knx.Bus.Common.Priority.System"/> is not allowed and throws an <see cref="T:System.ArgumentOutOfRangeException"/>.</param>
+            <example>
+              <code lang="cs" title="Writing a 1-bit group value using three-level group address string:" source="..\DocumentationSamples\BusSamples.cs" region="Write 1bit group value using three-level GA string"/>
+              <code lang="cs" title="Writing a 1-bit group value using two-level group address string:" source="..\DocumentationSamples\BusSamples.cs" region="Write 1bit group value using two-level GA string"/>
+              <code lang="cs" title="Writing a 1-bit group value using ushort group address:" source="..\DocumentationSamples\BusSamples.cs" region="Write 1bit group value using GA ushort"/>
+              <code lang="cs" title="Writing a 4-bit group value using three-level group address string:" source="..\DocumentationSamples\BusSamples.cs" region="Write 4bit group value using three-level GA string"/>
+              <code lang="cs" title="Writing a 4-bit group value by casting a numeric number to the 4-bit type:" source="..\DocumentationSamples\BusSamples.cs" region="Write 4bit group value casted from int"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.ReadValue(Knx.Bus.Common.GroupAddress,Knx.Bus.Common.Priority,System.Int32)">
+            <summary>
+            Reads a group value from the bus and waits for the answer.
+            </summary>
+            <param name="targetAddress">The target <see cref="T:Knx.Bus.Common.GroupAddress"/>.</param>
+            <param name="priority">The priority used for sending. The priority <see cref="F:Knx.Bus.Common.Priority.System"/> is not allowed and throws an <see cref="T:System.ArgumentOutOfRangeException"/>.</param>
+            <param name="timeout">The timeout in milliseconds. If less or equal to 0, the default timeout is used.</param>
+            <returns>
+            Returns the typed value read from the bus when receiving a response from the bus, see <see cref="T:Knx.Bus.Common.GroupValues.GroupValue"/>.
+            </returns>
+            <example>
+            	<code lang="cs" title="Reading a 1-bit group value as bool using three-level group address string:" source="..\DocumentationSamples\BusSamples.cs" region="Read 1bit group value using three-level GA string"/>
+            	<code lang="cs" title="Reading a 4-bit group value into different types:" source="..\DocumentationSamples\BusSamples.cs" region="Read 4bit group value casted into different types"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.SendReadValueRequest(Knx.Bus.Common.GroupAddress,Knx.Bus.Common.Priority)">
+            <summary>
+            Send a group value read request to the bus.
+            </summary>
+            <param name="targetAddress">The target <see cref="T:Knx.Bus.Common.GroupAddress"/>.</param>
+            <param name="priority">The priority used for sending. The priority <see cref="F:Knx.Bus.Common.Priority.System"/> is not allowed and throws an <see cref="T:System.ArgumentOutOfRangeException"/>.</param>
+            <remarks>
+            In contrast to <see cref="M:Knx.Falcon.Sdk.Bus.ReadValue(Knx.Bus.Common.GroupAddress,Knx.Bus.Common.Priority,System.Int32)"/>, this method does not wait for the answer. The response(s) can be collected by subscribing to the
+            <see cref="E:Knx.Falcon.Sdk.Bus.GroupValueReceived"/> event.
+            </remarks>
+            <example>
+            	<code lang="cs" source="..\DocumentationSamples\BusSamples.cs" region="Read group value asynchronously"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.SendValueResponse(Knx.Bus.Common.GroupAddress,Knx.Bus.Common.GroupValues.GroupValue,Knx.Bus.Common.Priority)">
+            <summary>
+            Send a group value response to the bus.
+            </summary>
+            <param name="targetAddress">The target <see cref="T:Knx.Bus.Common.GroupAddress"/>.</param>
+            <param name="value">The value to be sent, see <see cref="T:Knx.Bus.Common.GroupValues.GroupValue"/>.</param>
+            <param name="priority">The priority used for sending. The priority <see cref="F:Knx.Bus.Common.Priority.System"/> is not allowed and throws an <see cref="T:System.ArgumentOutOfRangeException"/>.</param>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Bus.Network">
+            <summary>
+            Returns a <see cref="P:Knx.Falcon.Sdk.Bus.Network"/> object for non-secure network management.
+            </summary>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Bus.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:Knx.Falcon.Sdk.Device">
+            <summary>
+            The device class for performing device management.
+            </summary>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Device.UsedApduLength">
+            <summary>
+            Gets or sets the maximum APDU length used for communication.
+            </summary>
+            <value>
+            The maximum APDU length used for communication.
+            </value>
+            <exception cref="T:System.ArgumentOutOfRangeException">if the specified value is greater than the <see cref="P:Knx.Falcon.Sdk.Bus.MaxApduLength"/> of the local interface.</exception>
+            <remarks>The APDU length is initialized to the maximum APDU length of the local interface when connecting the interface.</remarks>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Device.MaskVersion">
+            <summary>
+            Gets the mask version (device descriptor type 0) of the device.
+            </summary>
+            <value>
+            The mask version (device descriptor type 0) of the device.
+            </value>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Device.AuthorizationLevel">
+            <summary>
+            Gets the current authorization level returned from the device if authorization is used.
+            </summary>
+            <value>
+            The current authorization level.
+            </value> 
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Device.SupportsAuthorization">
+            <summary>
+            Gets a value indicating whether the device supports authorization.
+            </summary>
+            <value>
+            	<c>true</c> if the device supports authorization; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Device.Address">
+            <summary>
+            Gets the individual address of the connected device.
+            </summary>
+            <value>The <see cref="T:Knx.Bus.Common.IndividualAddress"/> of the connected device.</value>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Device.IsConnected">
+            <summary>
+            Gets a value indicating whether the connection to the device is currently established.
+            </summary>
+            <value>
+            	<c>true</c> if this instance is connected; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.Device.ApplicationLayerRetries">
+            <summary>
+            Get or set the number of application layer retries
+            </summary>
+            <value>The number of times a failed application layer service shall be retried.</value>
+            <remarks>
+            This setting affects all services which expect a response from the device. If no response is received within 
+            the relevant timeout, the request is repeated (after re-establishing the transport layer connection if necessary).
+            The default value is 0 (no retries).
+            </remarks>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.Authorize(System.UInt32)">
+            <summary>
+            The authorize method sends an authorize request to the device and returns the access level granted by the device.
+            </summary>
+            <param name="accessKey">The new access key used for authorization request.</param>
+            <returns>The access level granted for the key provided. 0 if authorization is not supported.</returns>
+            <example>
+            <code lang="cs" title="This example shows how to use the Authorize method:" source="..\DocumentationSamples\AuthorizeSamples.cs" region="Authorize"/>
+            </example>   
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadDeviceDescriptor2">
+            <summary>
+            Reads the device descriptor type 2 (DD2) from the device.
+            </summary>
+            <returns>Returns the read data.</returns>
+            <exception cref="T:Knx.Bus.Common.Exceptions.CommunicationException"><see cref="F:Knx.Bus.Common.Exceptions.CommunicationException.Reason.ResourceDoesNotExist"/> if the device does not support DD2</exception>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadMemory(System.UInt32,System.Int32,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads memory from the device.
+            </summary>
+            <param name="address">The start address for the read operation.</param>
+            <param name="count">The number of bytes to be read.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>Returns the read data bytes from the device </returns>
+            <exception cref="T:System.ArgumentException">if the address value is smaller than 0 or greater than 0xFFFF.</exception> 
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadMemory method:" source="..\DocumentationSamples\MemorySamples.cs" region="ReadMemory"/>
+            </example> 
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadUserMemory(System.UInt32,System.Int32,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads user memory from the device.
+            </summary>
+            <param name="address">The start address for the read operation.</param>
+            <param name="count">The number of bytes to be read.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>Returns the read data bytes from the device </returns>
+            <exception cref="T:System.ArgumentException">if the address value is smaller than 0 or greater than 0xFFFFF.</exception> 
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadUserMemory method:" source="..\DocumentationSamples\MemorySamples.cs" region="ReadUserMemory"/>
+            </example> 
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadLineCouplerSlaveMemory(System.UInt32,System.Int32,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads line coupler slave memory from the device (line coupler).
+            </summary>
+            <param name="address">The start address for the read operation.</param>
+            <param name="count">The number of bytes to be read.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>Returns the read data bytes from the device </returns>
+            <exception cref="T:System.ArgumentException">if the address value is smaller than 0 or greater than 0xFFFF.</exception> 
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadLineCouplerSlaveMemory method:" source="..\DocumentationSamples\MemorySamples.cs" region="ReadCouplerMemory"/>
+            </example> 
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadRoutingTableMemory(System.UInt32,System.Int32,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads routing table memory from the device (line coupler).
+            </summary>
+            <param name="address">The start address for the read operation.</param>
+            <param name="count">The number of bytes to be read.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>Returns the read data bytes from the device </returns>
+            <exception cref="T:System.ArgumentException">if the address value is smaller than 0 or greater than 0xFFFF.</exception> 
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadRoutingTableMemory method:" source="..\DocumentationSamples\MemorySamples.cs" region="ReadRoutingTableMemory"/>
+            </example> 
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadMemoryExtended(System.UInt32,System.Int32,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads memory from the device using extended memory services (AN177).
+            </summary>
+            <param name="address">The start address for the read operation.</param>
+            <param name="count">The number of bytes to be read.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>Returns the read data bytes from the device </returns>
+            <exception cref="T:System.ArgumentException">if the address value is smaller than 0 or greater than 0xFFFFFF.</exception> 
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadMemory method:" source="..\DocumentationSamples\MemorySamples.cs" region="ReadMemory"/>
+            </example> 
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadPropertyDescriptionById(System.Byte,System.Byte,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads an interface object property description from the device. The property 
+            description is accessed through the interface object index and the property ID. 
+            </summary>
+            <param name="objectIndex">Index of the interface object of the device.</param>
+            <param name="propertyId">The Id of the object property.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>The property description object <see cref="T:Knx.Bus.Common.PropertyDescription"/> </returns>
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadPropertyDescriptionById method:" source="..\DocumentationSamples\PropertySamples.cs" region="ReadPropertyDescriptionById"/>
+            </example>   
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadPropertyDescriptionByIndex(System.Byte,System.Byte,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads an interface object property description from the device. The property 
+            description is accessed through the interface object index and the property index. 
+            </summary>
+            <param name="objectIndex">Index of the interface object of the device.</param>
+            <param name="propertyIndex">Index of the object property.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>The property description object <see cref="T:Knx.Bus.Common.PropertyDescription"/> </returns>
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadPropertyDescriptionByIndex method:" source="..\DocumentationSamples\PropertySamples.cs" region="ReadPropertyDescriptionByIndex"/>
+            </example>    
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadPropertyExtDescriptionById(System.UInt16,System.UInt16,System.UInt16,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads an extended interface object property description from the device according to AN 163. The property 
+            description is accessed through the interface object type, instance index and the property ID. 
+            This method will fail if <see cref="P:Knx.Falcon.Sdk.Device.UsedApduLength"/> is less than 16.
+            </summary>
+            <param name="objectType">Type of the interface object of the device.</param>
+            <param name="instance">Instance of the object (1-based).</param>
+            <param name="propertyId">The Id of the object property.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>The property description object <see cref="T:Knx.Bus.Common.PropertyDescription"/> </returns>
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadPropertyDescriptionById method:" source="..\DocumentationSamples\PropertySamples.cs" region="ReadPropertyDescriptionById"/>
+            </example>   
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadPropertyExtDescriptionByIndex(System.UInt16,System.UInt16,System.UInt16,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads an extended interface object property description from the device according to AN 163. The property 
+            description is accessed through the interface object type, instance index and the property index. 
+            This method will fail if <see cref="P:Knx.Falcon.Sdk.Device.UsedApduLength"/> is less than 16.
+            </summary>
+            <param name="objectType">Type of the interface object of the device.</param>
+            <param name="instance">Instance of the object (1-based).</param>
+            <param name="propertyIndex">Index of the object property.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>The property description object <see cref="T:Knx.Bus.Common.PropertyDescription"/> </returns>
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadPropertyDescriptionByIndex method:" source="..\DocumentationSamples\PropertySamples.cs" region="ReadPropertyDescriptionByIndex"/>
+            </example>    
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadProperty(System.Byte,System.Byte,Knx.Bus.Common.PropertyDataType,System.Int32,System.Int32,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Read interface object property data.
+            </summary>
+            <param name="objectIndex">Index of the interface object of the device.</param>
+            <param name="propertyId">Id of the object property.</param>
+            <param name="propertyDataType">The data type of the property <see cref="T:Knx.Bus.Common.PropertyDataType"/> </param>
+            <param name="index">The array index of the first array element to be read.</param>
+            <param name="numberOfElements">The number of array elements to be read.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>Byte array containing the requested property data</returns>
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadProperty method:" source="..\DocumentationSamples\PropertySamples.cs" region="ReadPropertyUsingUsb"/>
+            </example>  
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadPropertyExt(System.UInt16,System.UInt16,System.UInt16,Knx.Bus.Common.PropertyDataType,System.Int32,System.Int32,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Read interface object property data using the extended services (AN 163).
+            </summary>
+            <param name="objectType">Type of the interface object of the device.</param>
+            <param name="instance">Instance of the object (1-based).</param>
+            <param name="propertyId">Id of the object property.</param>
+            <param name="propertyDataType">The data type of the property <see cref="T:Knx.Bus.Common.PropertyDataType"/> </param>
+            <param name="index">The array index of the first array element to be read.</param>
+            <param name="numberOfElements">The number of array elements to be read.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>Byte array containing the requested property data</returns>
+            <exception cref="T:Knx.Bus.Common.Exceptions.NoResponseReceivedException">if the device did not respond in time.</exception>   
+            <exception cref="T:Knx.Bus.Common.Exceptions.CommunicationException">if the device responded with a negative return code.
+            The return code can be retrieved from <see cref="P:Knx.Bus.Common.Exceptions.CommunicationException.DeviceReturnCode"/>.</exception>   
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadProperty method:" source="..\DocumentationSamples\PropertySamples.cs" region="ReadPropertyUsingUsb"/>
+            </example>  
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.WritePropertyExt(System.UInt16,System.UInt16,System.UInt16,Knx.Bus.Common.PropertyDataType,System.Int32,System.Int32,System.Collections.Generic.IEnumerable{System.Byte},System.Boolean,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Writes interface object property data using the extended services (AN 163).
+            </summary>
+            <param name="objectType">Type of the interface object of the device.</param>
+            <param name="instance">Instance of the object (1-based).</param>
+            <param name="propertyId">Identifier of the object property.</param>
+            <param name="propertyDataType">The data type of the property <see cref="T:Knx.Bus.Common.PropertyDataType"/></param>
+            <param name="index">The array index of the first array element to be written.</param>
+            <param name="numberOfElements">The number of array elements to be written.</param>
+            <param name="data">The data to write.</param>
+            <param name="requestConfirm">if set to <c>true</c> the confirmed procedure is used.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <exception cref="T:Knx.Bus.Common.Exceptions.NoResponseReceivedException">if the device did not respond in time.</exception>   
+            <exception cref="T:Knx.Bus.Common.Exceptions.CommunicationException">if the device responded with a negative return code.
+            The return code can be retrieved from <see cref="P:Knx.Bus.Common.Exceptions.CommunicationException.DeviceReturnCode"/>.</exception>   
+            <example>
+            <code lang="cs" title="This example shows how to use the WriteProperty method:" source="..\DocumentationSamples\PropertySamples.cs" region="WriteProperty"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadFunctionPropertyExt(System.UInt16,System.UInt16,System.UInt16,System.Collections.Generic.IEnumerable{System.Byte},System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads the status of a function property using the extended services (AN 163).
+            </summary>
+            <param name="objectType">Type of the interface object of the device.</param>
+            <param name="instance">Instance of the object (1-based).</param>
+            <param name="propertyId">Id of the object property. See KNX AN031 application notes in the KNX handbook for supported property IDs</param>
+            <param name="command">The command passed to the device.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>The function property object <see cref="T:Knx.Bus.Common.FunctionPropertyResult"/></returns>  
+            <exception cref="T:Knx.Bus.Common.Exceptions.NoResponseReceivedException">if the device did not respond in time.</exception>   
+            <exception cref="T:Knx.Bus.Common.Exceptions.CommunicationException">if the device responded with a negative return code.
+            The return code can be retrieved from <see cref="P:Knx.Bus.Common.Exceptions.CommunicationException.DeviceReturnCode"/>.</exception>   
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadFunctionProperty method:" source="..\DocumentationSamples\PropertySamples.cs" region="ReadFunctionProperty"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadObjectType(System.Byte,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads the interface object type (the value of the PID_OBJECT_TYPE property).
+            </summary>
+            <param name="objectIndex">Index of the interface object of the device.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>The requested object type; or <c>null</c> if the interface object does not exist or does not support the PID_OBJECT_TYPE property.</returns>
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadObjectType method:" source="..\DocumentationSamples\PropertySamples.cs" region="ReadObjectType"/>
+            </example>  
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.WriteProperty(System.Byte,System.Byte,Knx.Bus.Common.PropertyDataType,System.Int32,System.Int32,System.Collections.Generic.IEnumerable{System.Byte},System.Boolean,System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Writes interface object property data.
+            </summary>
+            <param name="objectIndex">Index of the interface object of the device.</param>
+            <param name="propertyId">Identifier of the object property.</param>
+            <param name="propertyDataType">The data type of the property <see cref="T:Knx.Bus.Common.PropertyDataType"/></param>
+            <param name="index">The array index of the first array element to be written.</param>
+            <param name="numberOfElements">The number of array elements to be written.</param>
+            <param name="data">The data to write.</param>
+            <param name="verify">if set to <c>true</c> the data of the response is verified against the data of the write request as defined. 
+            if set to <c>false</c> the data in the response is not compared with the data from the request.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">if <paramref name="propertyId"/> designates a LoadStateControl or RunStateControl.</exception>  
+            <example>
+            <code lang="cs" title="This example shows how to use the WriteProperty method:" source="..\DocumentationSamples\PropertySamples.cs" region="WriteProperty"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadFunctionProperty(System.Byte,System.Byte,System.Collections.Generic.IEnumerable{System.Byte},System.Action{Knx.Bus.Common.AsyncProgress})">
+            <summary>
+            Reads the status of a function property.
+            </summary>
+            <param name="objectIndex">Index of the interface object of the device.</param>
+            <param name="propertyId">Id of the object property. See KNX AN031 application notes in the KNX handbook for supported property IDs</param>
+            <param name="command">The command passed to the device.</param>
+            <param name="progressCallback">An optional callback method to retrieve progress information
+            and the possibility to cancel the operation.</param>
+            <returns>The function property object <see cref="T:Knx.Bus.Common.FunctionPropertyResult"/></returns>  
+            <exception cref="T:System.ArgumentOutOfRangeException">if no command is specified.</exception>   
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadFunctionProperty method:" source="..\DocumentationSamples\PropertySamples.cs" region="ReadFunctionProperty"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadMaskVersion">
+            <summary>
+            Reads the device descriptor type 0 (mask version).
+            </summary>
+            <returns>The device descriptor type 0 (mask version)</returns>
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadMaskVersion method:" source="..\DocumentationSamples\DeviceSamples.cs" region="ReadMaskVersion"/>
+            </example> 
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.ReadAdc(System.Byte,System.Byte)">
+            <summary>
+            Reads the value of the AD-converter.
+            </summary>
+            <param name="channel">The channel number of the AD-converter.</param>
+            <param name="readCount">The number of consecutive read operations.</param>
+            <returns>Value of the AD-converter computed by the summation of the consecutive ADC accesses.</returns>
+            <example>
+            <code lang="cs" title="This example shows how to use the ReadAdc method:" source="..\DocumentationSamples\DeviceSamples.cs" region="ReadAdc"/>
+            </example>  
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Device.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:Knx.Falcon.Sdk.DiscoveryClient">
+            <summary>
+            The discovery client to discover KNX/IP devices.
+            </summary>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.DiscoveryClient.#ctor(Knx.Bus.Common.KnxIp.AdapterTypes)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Knx.Falcon.Sdk.DiscoveryClient"/> class.
+            </summary>
+            <param name="adapterType">Specifies the network adapters to use; see <see cref="T:Knx.Bus.Common.KnxIp.AdapterTypes"/>.</param>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.DiscoveryClient.#ctor(System.Net.IPAddress[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:Knx.Falcon.Sdk.DiscoveryClient"/> class.
+            </summary>
+            <param name="localIpAddresses">Specifies the network adapters to use by their local IP Address.</param>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.DiscoveryClient.UseExtendedSearch">
+            <summary>
+            Gets or sets a flag determining if the discovery shall use SEARCH_REQUEST_EXTENDED (Core v2).
+            Either one of <see cref="P:Knx.Falcon.Sdk.DiscoveryClient.UseV1Search"/> and <see cref="P:Knx.Falcon.Sdk.DiscoveryClient.UseExtendedSearch"/> or both can be set.
+            </summary>
+        </member>
+        <member name="P:Knx.Falcon.Sdk.DiscoveryClient.UseV1Search">
+            <summary>
+            Gets or sets a flag determining if the discovery shall use SEARCH_REQUEST (Core v1).
+            Either one of <see cref="P:Knx.Falcon.Sdk.DiscoveryClient.UseV1Search"/> and <see cref="P:Knx.Falcon.Sdk.DiscoveryClient.UseExtendedSearch"/> or both can be set.
+            </summary>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.DiscoveryClient.BeginDiscover(System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.KnxIp.DiscoveryResult[],Knx.Bus.Common.KnxIp.DiscoveryResult}})">
+            <summary>
+            Discovers the KNX/IP devices asynchronously.
+            </summary>
+            <param name="timeout">The timeout when to stop searching. If not specified (<c>null</c>), default is 3 seconds.</param>
+            <param name="progressCallback">The optional progress callback to be informed about progress events or to cancel the pending operation.</param>
+            <returns>
+            An <see cref="T:System.IAsyncResult"/> object that represents the result of the <see cref="M:Knx.Falcon.Sdk.DiscoveryClient.BeginDiscover(System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.KnxIp.DiscoveryResult[],Knx.Bus.Common.KnxIp.DiscoveryResult}})"/> operation. This result can be used either to pass it to the <see cref="M:Knx.Falcon.Sdk.DiscoveryClient.EndDiscover(System.IAsyncResult)"/>
+            and to wait for the result or to use the wait handle to wait for the result.
+            </returns>
+            <example>
+              <code lang="cs" title="Discover KNX/IP devices asynchronously waiting for the result using EndDiscover method:" source="..\DocumentationSamples\DiscoverySamples.cs" region="Discover asynchronously with EndRead-Method"/>
+              <code lang="cs" title="Discover KNX/IP devices asynchronously waiting for the result using progress callback:" source="..\DocumentationSamples\DiscoverySamples.cs" region="Discover asynchronously with callback to wait and receive result"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.DiscoveryClient.EndDiscover(System.IAsyncResult)">
+            <summary>
+            Completes the asynchronous <see cref="M:Knx.Falcon.Sdk.DiscoveryClient.BeginDiscover(System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.KnxIp.DiscoveryResult[],Knx.Bus.Common.KnxIp.DiscoveryResult}})"/> operation and returns the result.
+            </summary>
+            <param name="result">The <see cref="T:System.IAsyncResult"/> returned by <see cref="M:Knx.Falcon.Sdk.DiscoveryClient.BeginDiscover(System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.KnxIp.DiscoveryResult[],Knx.Bus.Common.KnxIp.DiscoveryResult}})"/> method.</param>
+            <returns><c>DiscoveryResult</c> of the detected devices or an empty list if none found.</returns>
+            <exception cref="T:System.ArgumentException">specified IAsyncResult is not created by <see cref="M:Knx.Falcon.Sdk.DiscoveryClient.BeginDiscover(System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.KnxIp.DiscoveryResult[],Knx.Bus.Common.KnxIp.DiscoveryResult}})"/>.</exception>
+            <example>
+              <code lang="cs" title="Discover KNX/IP devices asynchronously waiting for the result using EndDiscover method:" source="..\DocumentationSamples\DiscoverySamples.cs" region="Discover asynchronously with EndRead-Method"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.DiscoveryClient.Discover(System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.KnxIp.DiscoveryResult[],Knx.Bus.Common.KnxIp.DiscoveryResult}})">
+            <summary>
+            Discovers the KNX/IP devices synchronously.
+            </summary>
+            <param name="timeout">The timeout when to stop searching. If not specified (<c>null</c>), default is 3 seconds.</param>
+            <param name="progressCallback">The optional progress callback to be informed about progress events or to cancel the pending operation.</param>
+            <returns><c>DiscoveryResult</c> of the detected devices or an empty list if none found.</returns>
+            <example>
+              <code lang="cs" title="Discover syncronously all KNX/IP devices" source="..\DocumentationSamples\DiscoverySamples.cs" region="Sync"/>
+              <code lang="cs" title="Discover syncronously a device with a specific individual address and stop searching id found:"  source="..\DocumentationSamples\DiscoverySamples.cs" region="SyncWithCancel"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.DiscoveryClient.ReadDeviceDescription(System.Net.IPAddress,System.UInt16,System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.KnxIp.DiscoveryResult[],Knx.Bus.Common.KnxIp.DiscoveryResult}})">
+            <summary>
+            Reads the device description of the specified KNXnet/IP device.
+            </summary>
+            <param name="ipAddress">The ip address of the specified KNXnet/IP device.</param>
+            <param name="port">The port.</param>  
+            <param name="timeout">The timeout when to stop searching. If not specified (<c>null</c>) defaults to 3 seconds.</param>
+            <param name="progressCallback">The optional progress callback to be informed about progress events or to cancel the pending operation.</param>
+            <returns>
+            An <see cref="T:System.IAsyncResult"/> object that represents the result of the <see cref="M:Knx.Falcon.Sdk.DiscoveryClient.BeginDiscover(System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.KnxIp.DiscoveryResult[],Knx.Bus.Common.KnxIp.DiscoveryResult}})"/> operation. This result can be used either to pass ist to the <see cref="M:Knx.Falcon.Sdk.DiscoveryClient.EndDiscover(System.IAsyncResult)"/>
+            and to wait for the result or to use the wait handle to wait for the result.
+            </returns>
+            <example>
+              <code lang="cs" title="Reads the description of a KNX/IP device:" source="..\DocumentationSamples\DiscoverySamples.cs" region="Read device description"/>
+            </example>
+        </member>
+        <member name="T:Knx.Falcon.Sdk.Network">
+            <summary>
+            The network class for performing KNX network management.
+            </summary>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Network.IsIndividualAddressFree(Knx.Bus.Common.IndividualAddress,System.Action{Knx.Bus.Common.CancelableProgress})">
+            <summary>
+            Determine if a given individual address is most likely free. Used to check before assigning a local address.
+            </summary>
+            <remarks>This is currently a synchronous function.</remarks>
+            <param name="individualAddress">Individual address to check</param>
+            <param name="progressCallback">The optional callback to cancel the pending operation.</param>
+            <returns><c>true</c> if the specified address is free; otherwise <c>false</c>.</returns>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Network.PingIndividualAddress(Knx.Bus.Common.IndividualAddress,System.Boolean,System.Action{Knx.Bus.Common.AsyncProgress{System.Boolean,System.Boolean}})">
+            <summary>
+            Pings for the specified individual address synchronously.
+            </summary>
+            <param name="address">The individual address.</param>
+            <param name="disconnect">if set to <c>true</c> a disconnect is sent when a telegram is received from 
+            the target device or after timeout. 
+            Note: if disconnect is false, the transport layer connection to the device remains open until the device
+            sends a T_Disconnect! It is not possible to open a device connection via <see cref="M:Knx.Falcon.Sdk.Bus.OpenDevice(Knx.Bus.Common.IndividualAddress,Knx.Bus.Common.ConnectionModes,System.Action{Knx.Bus.Common.AsyncProgress})"/> until
+            the device disconnected!</param>
+            <param name="progressCallback">The optional progress callback to be informed about progress events or to cancel the pending operation.</param>
+            <returns>
+            Returns <c>true</c> if at least one device responds.
+            </returns>
+            <example>
+              <code lang="cs" title="Ping for an individual address synchronously:" source="..\DocumentationSamples\NetworkSamples.cs" region="Ping synchronously"/>
+              </example>
+            <remarks>
+            This method returns when the first device sends a response.
+            </remarks>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Network.PingIndividualAddress(Knx.Bus.Common.IndividualAddress,System.Boolean,System.TimeSpan,System.Action{Knx.Bus.Common.AsyncProgress{System.Boolean,System.Boolean}})">
+            <summary>
+            Pings for the specified individual address synchronously with a specific timeout.
+            </summary>
+            <param name="address">The individual address.</param>
+            <param name="disconnect">if set to <c>true</c> a disconnect is sent when a telegram is received from 
+            the target device or after timeout. 
+            Note: if disconnect is false, the transport layer connection to the device remains open until the device
+            sends a T_Disconnect! It is not possible to open a device connection via <see cref="M:Knx.Falcon.Sdk.Bus.OpenDevice(Knx.Bus.Common.IndividualAddress,Knx.Bus.Common.ConnectionModes,System.Action{Knx.Bus.Common.AsyncProgress})"/> until
+            the device disconnected!</param>
+            <param name="timeout">The timeout interval.</param>
+            <param name="progressCallback">The optional progress callback to be informed about progress events or to cancel the pending operation.</param>
+            <returns>
+            Returns <c>true</c> if at least one device responds.
+            </returns>
+            <example>
+              <code lang="cs" title="Ping for an individual address synchronously:" source="..\DocumentationSamples\NetworkSamples.cs" region="Ping synchronously"/>
+              </example>
+            <remarks>
+            This method returns when the first device sends a response.
+            </remarks>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Network.BeginPingIndividualAddress(Knx.Bus.Common.IndividualAddress,System.Boolean,System.Action{Knx.Bus.Common.AsyncProgress{System.Boolean,System.Boolean}})">
+            <summary>
+            Pings for the specified individual address asynchronously.
+            </summary>
+            <param name="address">The individual address.</param>
+            <param name="disconnect">if set to <c>true</c> a disconnect is sent when a telegram is received from 
+            the target device or after timeout. 
+            Note: if disconnect is false, the transport layer connection to the device remains open until the device
+            sends a T_Disconnect! It is not possible to open a device connection via <see cref="M:Knx.Falcon.Sdk.Bus.OpenDevice(Knx.Bus.Common.IndividualAddress,Knx.Bus.Common.ConnectionModes,System.Action{Knx.Bus.Common.AsyncProgress})"/> until
+            the device disconnected!</param>
+            <param name="progressCallback">The optional progress callback to be informed about progress events or to cancel the pending operation.</param>
+            <returns>An <see cref="T:System.IAsyncResult"/> object that represents the result of the operation. This result can be used either to pass it to the <see cref="M:Knx.Falcon.Sdk.Network.EndPingIndividualAddress(System.IAsyncResult)"/>
+            and to wait for the result or to use the wait handle to wait for the result.</returns>
+            <remarks>The result of the operation is also reported via the progress callback if the operation has finished.</remarks>
+            <example>
+              <code lang="cs" title="Ping for an individual address asynchronously waiting for the result using EndPingIndividualAddress method:" source="..\DocumentationSamples\NetworkSamples.cs" region="Ping asynchronously with EndPing-Method"/>
+              <code lang="cs" title="Ping for an individual address asynchronously waiting for the result using progress callback:" source="..\DocumentationSamples\NetworkSamples.cs" region="Ping asynchronously with callback to wait and receive result"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Network.BeginPingIndividualAddress(Knx.Bus.Common.IndividualAddress,System.Boolean,System.TimeSpan,System.Action{Knx.Bus.Common.AsyncProgress{System.Boolean,System.Boolean}})">
+            <summary>
+            Pings for the specified individual address asynchronously with a specific timeout.
+            </summary>
+            <param name="address">The individual address.</param>
+            <param name="timeout">The timeout interval.</param>
+            <param name="disconnect">if set to <c>true</c> a disconnect is sent when a telegram is received from 
+            the target device or after timeout. 
+            Note: if disconnect is false, the transport layer connection to the device remains open until the device
+            sends a T_Disconnect! It is not possible to open a device connection via <see cref="M:Knx.Falcon.Sdk.Bus.OpenDevice(Knx.Bus.Common.IndividualAddress,Knx.Bus.Common.ConnectionModes,System.Action{Knx.Bus.Common.AsyncProgress})"/> until
+            the device disconnected!</param>
+            <param name="progressCallback">The optional progress callback to be informed about progress events or to cancel the pending operation.</param>
+            <returns>An <see cref="T:System.IAsyncResult"/> object that represents the result of the operation. This result can be used either to pass it to the <see cref="M:Knx.Falcon.Sdk.Network.EndPingIndividualAddress(System.IAsyncResult)"/>
+            and to wait for the result or to use the wait handle to wait for the result.</returns>
+            <remarks>The result of the operation is also reported via the progress callback if the operation has finished.</remarks>
+            <example>
+              <code lang="cs" title="Ping for an individual address asynchronously waiting for the result using EndPingIndividualAddress method:" source="..\DocumentationSamples\NetworkSamples.cs" region="Ping asynchronously with EndPing-Method"/>
+              <code lang="cs" title="Ping for an individual address asynchronously waiting for the result using progress callback:" source="..\DocumentationSamples\NetworkSamples.cs" region="Ping asynchronously with callback to wait and receive result"/>
+            </example>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.Network.EndPingIndividualAddress(System.IAsyncResult)">
+            <summary>
+            Completes the asynchronous <see cref="M:Knx.Falcon.Sdk.Network.BeginPingIndividualAddress(Knx.Bus.Common.IndividualAddress,System.Boolean,System.Action{Knx.Bus.Common.AsyncProgress{System.Boolean,System.Boolean}})"/> operation and returns the result.
+            </summary>
+            <param name="result">The <see cref="T:System.IAsyncResult"/> returned by <see cref="M:Knx.Falcon.Sdk.Network.BeginPingIndividualAddress(Knx.Bus.Common.IndividualAddress,System.Boolean,System.Action{Knx.Bus.Common.AsyncProgress{System.Boolean,System.Boolean}})"/> method.</param>
+            <returns><c>true</c> if the specified device exists on the bus; otherwise <c>false</c>.</returns>
+            <example>
+              <code lang="cs" title="Ping for an individual address asynchronously waiting for the result using EndPingIndividualAddress method:" source="..\DocumentationSamples\NetworkSamples.cs" region="Ping asynchronously with EndPing-Method"/>
+            </example>
+        </member>
+        <member name="T:Knx.Falcon.Sdk.UsbDeviceEnumerator">
+            <summary>
+            Enumerates connected KNX USB interfaces.
+            </summary>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.UsbDeviceEnumerator.BeginGetAvailableInterfaces(System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.Configuration.UsbConnectorParameters[]}})">
+            <summary>
+            Begins the asynchronous scan for connected KNX USB interfaces.
+            </summary>
+            <param name="timeout">The timeout for the search process. By default, this timeout is 3 seconds.</param>
+            <param name="progressCallback">The progress callback for asynchronous progress information.</param>
+            <returns>The <see cref="T:System.IAsyncResult"/> for this operation to be used with the <see cref="M:Knx.Falcon.Sdk.UsbDeviceEnumerator.EndGetAvailableInterfaces(System.IAsyncResult)"/> method.</returns>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.UsbDeviceEnumerator.EndGetAvailableInterfaces(System.IAsyncResult)">
+            <summary>
+            Waits for the asynchronous scan for connected KNX USB interfaces started by <see cref="M:Knx.Falcon.Sdk.UsbDeviceEnumerator.BeginGetAvailableInterfaces(System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.Configuration.UsbConnectorParameters[]}})"/> to finish.
+            </summary>
+            <param name="result">The <see cref="T:System.IAsyncResult"/> returned by the <see cref="M:Knx.Falcon.Sdk.UsbDeviceEnumerator.BeginGetAvailableInterfaces(System.Nullable{System.TimeSpan},System.Action{Knx.Bus.Common.AsyncProgress{Knx.Bus.Common.Configuration.UsbConnectorParameters[]}})"/> method.</param>
+            <returns>A list with a <see cref="T:Knx.Bus.Common.Configuration.UsbConnectorParameters"/> instance for each connected KNX USB interface.</returns>
+        </member>
+        <member name="M:Knx.Falcon.Sdk.UsbDeviceEnumerator.GetAvailableInterfaces(System.Nullable{System.TimeSpan})">
+            <summary>
+            Synchronously scans for connected KNX USB interfaces.
+            </summary>
+            <param name="timeout">The timeout for the search process. By default, this timeout is 3 seconds.</param>
+            <returns>
+            A list with a <see cref="T:Knx.Bus.Common.Configuration.UsbConnectorParameters"/> instance for each connected KNX USB interface.
+            </returns>
+        </member>
+    </members>
+</doc>

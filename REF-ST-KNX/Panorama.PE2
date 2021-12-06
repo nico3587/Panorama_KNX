@@ -1,0 +1,25 @@
+[PanoStudio]
+AdvancedNaming=0
+ShowNonOPCEquipmentFolder=0
+ShowValueColumn=0
+ShowCommentsInTree=0
+GroupViewEnabled=1
+Simplified=0
+ShowSimplifiedList=1
+FilterNewMenu=1
+AllowUserClasses=0
+BrowseSubUnits=1
+ShowPanoClasses=0
+ShowUserClasses=0
+ShowNonOPCEqu=0
+ShowUsers=0
+ShowSystem=0
+ShowParameters=0
+ShowComponents=1
+ShowExploitation=0
+OnlyMainCompo=1
+HideObjectsWithoutPublicProperties=1
+mdp=
+TreeSel=C:\Users\Public\Documents\Codra\Panorama E2\REF-ST-KNX|Classes utilisateur|KNX
+ListSel=
+RowSel=
